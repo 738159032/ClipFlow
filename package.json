@@ -1,0 +1,37 @@
+{
+  "name": "clipflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "3D product showcase and short-video composition tool",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.8.2",
+    "mp4-muxer": "^5.2.2",
+    "next": "15.5.28",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@types/three": "^0.186.0",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "15.5.28",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

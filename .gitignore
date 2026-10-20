@@ -1,0 +1,32 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# local env
+.env
+.env.local
+.env*.local
+
+# test artifacts
+test-results/
+playwright-report/
+blob-report/
+coverage/
+.verification/
+*.log
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# agent workspace / local notes
+.workbuddy/
+.agents/
