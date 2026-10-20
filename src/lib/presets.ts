@@ -1,5 +1,6 @@
 import type {
   AnimationConfig,
+  AnimationPresetId,
   Layer,
   LightingConfig,
   MaterialConfig,
@@ -176,6 +177,8 @@ export interface TemplateDefinition {
   id: string;
   name: string;
   description: string;
+  /** One-line background description shown on the gallery card. */
+  backgroundSummary: string;
   /** Style fields applied over the current project. Content is preserved. */
   patch: {
     material: MaterialConfig;
@@ -185,11 +188,19 @@ export interface TemplateDefinition {
   };
 }
 
+export const ANIMATION_LABELS: Record<AnimationPresetId, string> = {
+  none: '静止',
+  turntable: '转台',
+  float: '悬浮',
+  reveal: '入场',
+};
+
 export const TEMPLATES: TemplateDefinition[] = [
   {
     id: 'clean-studio',
     name: '极简影棚',
     description: '白底 + 高光材质 + 缓慢转台，适合电商主图视频',
+    backgroundSummary: '浅灰渐变 · 160°',
     patch: {
       material: { presetId: 'gloss', color: '#d8dde6', metalness: 0.15, roughness: 0.18, mapAssetId: null },
       lighting: {
@@ -208,6 +219,7 @@ export const TEMPLATES: TemplateDefinition[] = [
     id: 'sunset-drop',
     name: '日落新品',
     description: '暖色渐变 + 悬浮动效，适合社交平台上新',
+    backgroundSummary: '暖桃→酱紫 · 200°',
     patch: {
       material: { presetId: 'matte', color: '#e8d6c4', metalness: 0, roughness: 0.8, mapAssetId: null },
       lighting: {
@@ -225,7 +237,8 @@ export const TEMPLATES: TemplateDefinition[] = [
   {
     id: 'noir-metal',
     name: '暗调金属',
-    description: '硬光 + 金属材质 + reveal 入场，适合质感大片',
+    description: '硬光 + 金属材质 + 入场动效，适合质感大片',
+    backgroundSummary: '近黑渐变 · 180°',
     patch: {
       material: { presetId: 'metal', color: '#b8c2cc', metalness: 0.95, roughness: 0.28, mapAssetId: null },
       lighting: {
@@ -238,6 +251,63 @@ export const TEMPLATES: TemplateDefinition[] = [
       },
       animation: { presetId: 'reveal', durationMs: 4000, fps: 30, loop: true },
       camera: { ...DEFAULT_CAMERA, distance: 5.7, polarDeg: 74 },
+    },
+  },
+  {
+    id: 'mint-ceramic',
+    name: '薄荷陶瓷',
+    description: '柔光 + 陶瓷质感 + 慢悬浮，适合家居与美妆',
+    backgroundSummary: '薄荷白→浅绿 · 135°',
+    patch: {
+      material: { presetId: 'ceramic', color: '#f4f7f2', metalness: 0, roughness: 0.32, mapAssetId: null },
+      lighting: {
+        presetId: 'soft',
+        keyIntensity: 1.8,
+        fillIntensity: 1.5,
+        ambientIntensity: 0.85,
+        envIntensity: 1.25,
+        background: { type: 'gradient', from: '#f2fbf6', to: '#b7dfcd', angleDeg: 135 },
+      },
+      animation: { presetId: 'float', durationMs: 7000, fps: 30, loop: true },
+      camera: { ...DEFAULT_CAMERA, distance: 4.9, polarDeg: 80 },
+    },
+  },
+  {
+    id: 'cobalt-tech',
+    name: '钴蓝科技',
+    description: '深蓝渐变 + 冷补光 + 长转台，适合数码与科技品',
+    backgroundSummary: '钴蓝→墨蓝 · 210°',
+    patch: {
+      material: { presetId: 'gloss', color: '#a9bcd8', metalness: 0.55, roughness: 0.22, mapAssetId: null },
+      lighting: {
+        presetId: 'soft',
+        keyIntensity: 2.2,
+        fillIntensity: 1.9,
+        ambientIntensity: 0.45,
+        envIntensity: 1.1,
+        background: { type: 'gradient', from: '#20325a', to: '#080f1f', angleDeg: 210 },
+      },
+      animation: { presetId: 'turntable', durationMs: 8000, fps: 30, loop: true },
+      camera: { ...DEFAULT_CAMERA, distance: 5.2, polarDeg: 76 },
+    },
+  },
+  {
+    id: 'rose-editorial',
+    name: '玫瑰画报',
+    description: '蜜粉渐变 + 柔光近景 + 入场，适合服饰与香氛',
+    backgroundSummary: '蜜粉→玫瑰 · 150°',
+    patch: {
+      material: { presetId: 'matte', color: '#f6dbe3', metalness: 0.05, roughness: 0.62, mapAssetId: null },
+      lighting: {
+        presetId: 'soft',
+        keyIntensity: 1.6,
+        fillIntensity: 1.3,
+        ambientIntensity: 0.9,
+        envIntensity: 1.15,
+        background: { type: 'gradient', from: '#fff0f5', to: '#e9a9bd', angleDeg: 150 },
+      },
+      animation: { presetId: 'reveal', durationMs: 3500, fps: 30, loop: true },
+      camera: { ...DEFAULT_CAMERA, distance: 4.6, polarDeg: 81 },
     },
   },
 ];

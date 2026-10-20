@@ -246,7 +246,10 @@ test('the image layer is draggable and lands in the exported MP4', async ({ page
   const rect = await layerRect(page);
   expect(rect!.left).toBeGreaterThan(10);
 
-  // Export a real MP4 (the image must be baked into the frame).
+  // Preview first (workflow gate), then export a real MP4.
+  await page.getByTestId('generate-preview').click();
+  await expect(page.getByTestId('preview-card')).toBeVisible({ timeout: 60_000 });
+
   const downloadPromise = page.waitForEvent('download', { timeout: 400_000 });
   await page.getByTestId('export-start').click();
   await expect(page.getByTestId('export-result')).toBeVisible({ timeout: 400_000 });

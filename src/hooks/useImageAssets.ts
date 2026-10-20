@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { imageRegistry } from '@/lib/assets/registry';
 import { ImageUploadError, loadImageFile } from '@/lib/assets/upload';
 import { useEditorStore } from '@/store/editor';
+import { useWorkflowStore } from '@/store/workflow';
 import type { ImageAssetMeta } from '@/lib/types';
 
 export type ImageUploadStatus = 'idle' | 'reading' | 'decoding' | 'ready' | 'error';
@@ -84,6 +85,8 @@ export function useImageAssets() {
       }
 
       setView({ status: 'ready', fileName: meta.name, bytes: meta.bytes, progress: 1, error: null });
+      // An uploaded image counts as "asset ready" for the workflow machine.
+      useWorkflowStore.getState().send({ type: 'ASSET_READY' });
     } catch (error) {
       if (seq !== uploadSeq.current) return;
       if (error instanceof ImageUploadError && error.reason === 'ABORTED') return;

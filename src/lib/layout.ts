@@ -7,7 +7,7 @@ export const STAGE_PRESETS = {
   portrait: { width: 1080, height: 1920, label: '竖屏 9:16 · 1080×1920' },
   square: { width: 1080, height: 1080, label: '方形 1:1 · 1080×1080' },
   landscape: { width: 1920, height: 1080, label: '横屏 16:9 · 1920×1080' },
-  live: { width: 1280, height: 720, label: '预览 16:9 · 1280×720' },
+  live: { width: 1280, height: 720, label: '720p 16:9 · 1280×720' },
 } as const;
 
 export type StagePresetKey = keyof typeof STAGE_PRESETS;

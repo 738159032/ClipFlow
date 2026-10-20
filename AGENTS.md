@@ -37,8 +37,10 @@ docs/               产品、架构、决策、任务、验收
 8. **外部纹理必须打所有权标记**：图片贴图产生的 `THREE.Texture` 由 `ProductModel` 创建/释放，必须 `userData.external = true`；`disposeObject3D()` 只释放 GLB 自带贴图与"停放"的原始 map，禁止无差别 dispose 材质上的所有纹理。
 9. **素材运行时对象集中管理**：图片的 Object URL / ImageBitmap / HTMLImageElement 只能存在 `src/lib/assets/registry.ts`；store 只允许 `ImageAssetMeta`。创建与释放必须成对（替换、移除、重置、卸载走 `release()` / `clear()`），禁止把 Blob 或解码结果塞进 config。
 10. **错误必须可见**：加载、渲染、编码失败要落到 UI 状态与日志，不得 `catch {}` 后静默继续。
-11. **不得伪造结果**：导出失败就是失败。禁止用 WebM 改名 `.mp4`、禁止用模拟下载冒充成功。
-12. 新增公开函数需有 JSDoc 说明其职责与副作用。
+11. **状态机是唯一真相**：会改变风格/内容的 store 写操作必须经过 `markStyleEdit()` / `markContentEdit()`（`src/store/editor.ts`），被拒时直接放弃写入；禁止用 toast/短暂提示假装成功，也禁止在 `exporting` 状态下改动场景。
+12. **不做隐式持久化**：业务数据不得写入 localStorage / IndexedDB / 服务端。需要持久化时先出设计并等待确认（见 DECISIONS D14）。
+13. **不得伪造结果**：导出失败就是失败。禁止用 WebM 改名 `.mp4`、禁止用模拟下载冒充成功。
+14. 新增公开函数需有 JSDoc 说明其职责与副作用。
 
 ## 4. 验收规则
 

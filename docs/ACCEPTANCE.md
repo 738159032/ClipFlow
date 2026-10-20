@@ -259,3 +259,54 @@ npx playwright test tests/e2e/image-assets.spec.ts
 
 - 多素材库管理界面（当前是"单槽 + 元数据表"，重复上传会释放未被引用的旧素材）。
 - 贴图的 UV/投影编辑。
+
+---
+
+# 阶段 1 增量 · 模板画廊与工作流状态机（本轮交付）
+
+目标：把已有的模板能力整理成**可演示的选择流程**，并引入一个显式、可观察的工作流状态机；不重写 `TemplateDefinition.patch` 与 `applyTemplate()` 的"风格 patch"语义。
+
+## 1. 执行的命令与真实结果
+
+| 命令 | 结果 | 关键输出 |
+|---|---|---|
+| `npm run typecheck` | 通过 | 0 error |
+| `npm run lint` | 通过 | 0 error / 0 warning |
+| `npm run test` | 通过 | **9 文件 / 148 用例**（新增 `workflow-machine.test.ts` 23 例、`template-flow.test.ts` 13 例） |
+| `npm run build` | 通过 | `✓ Compiled successfully` |
+| `npx playwright test` | 通过 | **28 / 28**，1.1 min（新增 `template-flow.spec.ts` 6 例；原有 22 例全过） |
+
+## 2. 验收项逐条
+
+| 要求 | 结果 | 证据 |
+|---|---|---|
+| 至少 5 个可区分模板卡片 | 通过 | **6 个**：极简影棚 / 日落新品 / 暗调金属 / 薄荷陶瓷 / 钴蓝科技 / 玫瑰画报；每张卡片有 name、canvas 缩略图、背景摘要、灯光/动画 chip |
+| 缩略图是"预览" | 通过 | `TemplateThumb` 用模板**自己的**背景渐变 + 材质颜色/粗糙度 + 灯光预设现画，不是静态图片 |
+| 当前选中态 | 通过 | 卡片 `aria-pressed` + `data-selected`；已应用的卡片有「已应用」徽标 + `data-applied` |
+| 每个模板配置变化可观察 | 通过 | 切换后 `stage-frame` 的 `backgroundImage` 变为 rgb(247,248,251) / rgb(255,240,245) / rgb(26,31,39) 等（e2e 断言 3 组） |
+| 模型 / 素材 / 图层不被清除 | 通过 | 两次切换模板后：`layers` 数组引用不变、`model-name` 仍为 astronaut.glb、图片素材数量不变（单测断言引用相等 + e2e 断言 DOM） |
+| 修改风格后正确脱离模板 | 通过 | `patchMaterial` 等写 `templateId = null`；e2e：应用 → 拖动图层仍是 template-selected，改滑块后徽标消失且状态转 editing |
+| 「应用模板」入口 | 通过 | 只有选中卡片且状态允许时可用；重复应用同一模板被禁用并说明理由 |
+| 「恢复当前编辑」入口 | 通过 | 回到应用模板前的风格（背景逐字符相等），`templateId` 还原，状态回到 editing；手动改过风格后按钮禁用并给出原因 |
+| 「重新开始」+ 危险确认 | 通过 | 内联 `alertdialog`：取消不动任何东西，确认后图层回到 4 个、徽标消失、图片素材清空 |
+| 8 状态工作流机 | 通过 | `idle → asset-ready → template-selected → editing → preview-ready → exporting → export-success/export-error`，另有 `EXPORT_CANCELLED → preview-ready` |
+| 非法跳转有中文提示 | 通过 | e2e：未生成预览时 `导出 MP4` 禁用 + 「请先生成预览，再导出 MP4」；未选卡片「请先选择一个模板」；单测覆盖 **12 条**非法迁移，全部返回 `accepted:false` 且状态不变 |
+| 不能靠 toast 假装完成 | 通过 | 按钮禁用理由由 `transition()` 的返回值直接渲染；导出成功必须来自 `useExportController` 的真实 `done` 状态（LabShell 桥接），失败的 message 也来自编码器真实错误 |
+| 预览保存可观察的合成状态 | 通过 | `PreviewSnapshot`：Object URL + 1080×1920 + 体积 + 时间点 + 模板 + 图层数 + 耗时；界面显示缩略图与元数据，离开 preview-ready 后标记「已过期」 |
+| 暂停/继续影响真实动画 | 通过 | 播放按钮直接切换 `PlaybackClock.playing`，`AnimationDriver` 逐帧推进；暂停后时间码冻结（既有 e2e 的 `timecode` 断言） |
+| 桌面完成全流程 | 通过 | 1440×950：上传图片 → 加图层 → 套模板 → 拖动图层 → 生成预览 → 导出 MP4（产出 `template-flow.mp4`，>50KB） |
+| 移动端完成全流程 | 通过 | 390×844 + `hasTouch`：上传 → 加图层 → 套模板 → **触摸拖动** → 生成预览 → preview-ready（截图 `template-flow-mobile.png`） |
+| 不写 localStorage | 通过 | e2e 断言 `localStorage` 中没有包含 `clipflow` 的键 |
+
+## 3. 本轮修掉的问题
+
+1. **按钮名称歧义**：画幅预设「预览 16:9」与新按钮「生成预览」在 `getByRole(name)` 下冲突（对读屏用户也是同样的困惑）。把预设短标签改为 **720p**，测试改用 `exact: true`。
+2. **重置后状态失真**：`resetProject()` 会把 `assetStatus` 清成 idle，导致"模型仍在但流程显示待开始"。改为重置前记住模型是否就绪，重置后补发 `ASSET_READY`。
+3. **手机端舞台被埋**：单列布局下要先滚过所有面板才看到商品。≤900px 时给 `.lab__center` 加 `order: -1`，工作流条 + 舞台排在最前。
+
+## 4. 明确未做
+
+- 模板自定义 / 收藏 / 搜索；模板数量固定 6 个。
+- 预览仍是**静帧快照**，不是视频片段预览。
+- 缩略图是风格示意，不是真实商品渲染（真实渲染需要加载 GLB，成本过高）。
+- 未做持久化（刷新即回到 idle）。

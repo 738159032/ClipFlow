@@ -404,47 +404,6 @@ input[type='file'] {
   box-shadow: 0 1px 2px rgba(19, 26, 36, 0.08);
 }
 
-/* ----------------------------------------------------------------- templates */
-
-.template-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.template {
-  text-align: left;
-  border: 1px solid var(--border);
-  background: #fff;
-  border-radius: 8px;
-  padding: 8px 10px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-family: inherit;
-}
-
-.template strong {
-  font-size: 12.5px;
-  color: var(--text);
-}
-
-.template span {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.template:hover {
-  border-color: #c3cfe2;
-  background: var(--panel-2);
-}
-
-.template.is-active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
 /* -------------------------------------------------------------------- layers */
 
 .layer-list {
@@ -509,6 +468,239 @@ input[type='file'] {
 
 .layer-dot--watermark {
   background: #7b8798;
+}
+
+/* ------------------------------------------------------------------ workflow */
+
+.workflow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.workflow__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.workflow__step.is-done {
+  color: var(--ok);
+  border-color: #cfe6db;
+  background: var(--ok-soft);
+}
+
+.workflow__step.is-current {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.workflow__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.workflow__step.is-current .workflow__dot {
+  background: #fff;
+  opacity: 1;
+}
+
+.workflow__message {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.workflow__message[data-tone='warn'] {
+  color: var(--warn);
+}
+
+.workflow__message[data-tone='ok'] {
+  color: var(--ok);
+}
+
+.workflow__preview {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------- template gallery */
+
+.tpl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  gap: 8px;
+}
+
+.tpl-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tpl-card:hover {
+  border-color: #c3cfe2;
+}
+
+.tpl-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(43, 98, 246, 0.16);
+}
+
+.tpl-card__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+
+.tpl-card__name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tpl-card__summary {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.tpl-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tpl-card__chips span {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-2);
+}
+
+.tpl-card__badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ok);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tpl-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tpl-hint {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #f0bdb8;
+  border-radius: 9px;
+  background: var(--danger-soft);
+}
+
+.confirm strong {
+  font-size: 12.5px;
+  color: var(--danger);
+}
+
+.confirm p {
+  font-size: 11.5px;
+  color: #7a3b36;
+}
+
+/* ------------------------------------------------------------- preview card */
+
+.preview-card {
+  display: flex;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid #bfe5d3;
+  border-radius: 9px;
+  background: #f6fcf9;
+}
+
+.preview-card__thumb {
+  flex: 0 0 74px;
+  width: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.preview-card__thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.preview-card[data-stale='true'] {
+  border-color: #f3ddb3;
+  background: #fff8e8;
+}
+
+.preview-card[data-stale='true'] .preview-card__thumb {
+  opacity: 0.5;
+}
+
+.preview-card .kv {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .layer-dot--image {
@@ -1180,5 +1372,11 @@ input[type='file'] {
 @media (max-width: 900px) {
   .lab__grid {
     grid-template-columns: 1fr;
+  }
+  /* On phones the stage (with its workflow bar) comes first: the editor panels
+     are tall, and scrolling past all of them before seeing the product is
+     useless for "素材 → 模板 → 编辑 → 预览". */
+  .lab__center {
+    order: -1;
   }
 }

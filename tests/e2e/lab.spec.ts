@@ -115,6 +115,10 @@ test('exports a real playable MP4 with baked 2D text', async ({ page }) => {
   await expect(page.getByTestId('selected-codec')).toContainText('avc1', { timeout: 30_000 });
   await expect(page.getByTestId('export-resolution')).toHaveText('1080 × 1920');
 
+  // The workflow requires a composited preview snapshot before exporting.
+  await page.getByTestId('generate-preview').click();
+  await expect(page.getByTestId('preview-card')).toBeVisible({ timeout: 60_000 });
+
   await page.getByTestId('export-start').click();
 
   const downloadPromise = page.waitForEvent('download', { timeout: 400_000 });
@@ -277,6 +281,9 @@ test('cancelling mid-export releases the encoder and the app stays usable', asyn
 
   await page.goto('/lab');
   await expect(page.getByTestId('scene-model-status')).toContainText('ready', { timeout: 90_000 });
+
+  await page.getByTestId('generate-preview').click();
+  await expect(page.getByTestId('preview-card')).toBeVisible({ timeout: 60_000 });
 
   await page.getByTestId('export-start').click();
   await expect(page.getByTestId('export-progress')).toContainText('encoding', { timeout: 60_000 });

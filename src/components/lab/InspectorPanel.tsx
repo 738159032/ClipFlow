@@ -1,8 +1,7 @@
 'use client';
 
-import { imageRegistry } from '@/lib/assets/registry';
 import { formatBytes } from '@/lib/assets/validate';
-import { FIXTURE_MODEL, LIGHTING_PRESETS, MATERIAL_PRESETS, TEMPLATES } from '@/lib/presets';
+import { FIXTURE_MODEL, LIGHTING_PRESETS, MATERIAL_PRESETS } from '@/lib/presets';
 import { STAGE_PRESETS, type StagePresetKey } from '@/lib/layout';
 import type {
   AnimationPresetId,
@@ -17,6 +16,7 @@ import type {
 import { useEditorStore, selectSelectedLayer } from '@/store/editor';
 import { ColorField, Field, Section, Segmented, Slider, Toggle } from '@/components/ui/controls';
 import { ImageAssetPanel } from './ImageAssetPanel';
+import { TemplateGallery } from './TemplateGallery';
 
 const STAGE_KEYS = Object.keys(STAGE_PRESETS) as StagePresetKey[];
 
@@ -35,7 +35,6 @@ export function InspectorPanel({ onInjectBrokenAsset }: { onInjectBrokenAsset: (
     patchLighting,
     patchAnimation,
     applyMaterialPreset,
-    applyTemplateById,
     selectLayer,
     updateLayer,
     addLayer,
@@ -43,7 +42,6 @@ export function InspectorPanel({ onInjectBrokenAsset }: { onInjectBrokenAsset: (
     duplicateLayer,
     setModelFile,
     useFixtureModel,
-    resetProject,
   } = useEditorStore.getState();
 
   const activeStageKey = STAGE_KEYS.find((key) => {
@@ -53,33 +51,7 @@ export function InspectorPanel({ onInjectBrokenAsset }: { onInjectBrokenAsset: (
 
   return (
     <div className="panel panel--left">
-      <Section title="模板" desc="模板只写入风格字段，商品与图层内容保持不变">
-        <div className="template-list">
-          {TEMPLATES.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              className={config.templateId === template.id ? 'template is-active' : 'template'}
-              onClick={() => applyTemplateById(template.id)}
-              title={template.description}
-            >
-              <strong>{template.name}</strong>
-              <span>{template.description}</span>
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="btn btn--ghost btn--block"
-          onClick={() => {
-            resetProject();
-            // Project reset must also drop decoded images (bitmaps + URLs).
-            imageRegistry.clear();
-          }}
-        >
-          重置为初始项目
-        </button>
-      </Section>
+      <TemplateGallery />
 
       <Section title="商品素材" desc="GLB 通过 Object URL 加载，替换时显式 revoke + dispose">
         <div className="file-row">

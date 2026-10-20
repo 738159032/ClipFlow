@@ -153,7 +153,27 @@ pointerup
 - 模板 = 风格字段的 patch：`material / lighting / animation / camera`。
 - `applyTemplate()` **不覆盖**：商品资产、图层内容、图层几何、舞台尺寸。
 - 一旦用户手动修改任一风格字段，`templateId` 被置为 `null`（`detachFromTemplate` 语义），UI 不再高亮该模板 —— 表示"当前状态已偏离模板"。
-- 这个模型是"一次应用 + 后续脱离"，不支持"模板参数化联动"。`[待验证]` 是否需要双向联动（阶段 1 决策）。
+- 这个模型是"一次应用 + 后续脱离"，不支持"模板参数化联动"。
+
+### 7.1 工作流状态机（素材 → 模板 → 编辑 → 预览 → 导出）
+
+```
+idle → asset-ready → template-selected → editing → preview-ready → exporting → export-success / export-error
+                                                       ↑                    │
+                                                       └── EXPORT_CANCELLED ┘
+```
+
+- `src/lib/workflow/machine.ts`：纯函数 `transition(state, event)`，返回 `{ state, accepted, message, tone }`。UI 用同一个函数既判断"按钮能不能点 / 为什么不能点"，又执行动作 —— 禁用原因与实际行为不会分叉。
+- `src/store/workflow.ts`：当前状态、最近一条中文消息、**预览快照**、**模板恢复点**。
+- 事件来源：
+  - 模型加载完成 / 图片上传成功 → `ASSET_READY`
+  - store 的风格变更（材质/灯光/相机/动画/预设）→ `STYLE_EDITED`（并 `templateId = null`）
+  - store 的内容变更（图层增删改、画幅、模型参数）→ `CONTENT_EDITED`
+  - 导出器状态（`useExportController`）→ `EXPORT_SUCCEEDED / FAILED / CANCELLED`（`LabShell` 里桥接）
+  - 重新开始 → `RESET`
+- **导出前置条件**：必须处于 `preview-ready`（或 `export-success` / `export-error`，此时快照仍对应最新场景）。预览由 `captureStillFrame()` 生成，用的是与导出**同一个** `FrameCompositor`。
+- 拒绝变更：`exporting` 状态下 store 的写操作被丢弃（`markStyleEdit/markContentEdit` 返回 false），保证导出期间场景不变。
+- **不做持久化**：不写 localStorage、不写服务端；刷新即回到 `idle`。见 D14。
 
 ## 8. 生命周期
 

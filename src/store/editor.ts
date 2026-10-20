@@ -2,6 +2,8 @@
 
 import { create } from 'zustand';
 import { fitRectToAspect } from '../lib/assets/validate';
+import { TEMPLATES } from '../lib/presets';
+import { pickStyleSnapshot, useWorkflowStore } from './workflow';
 import {
   applyTemplate,
   createDefaultProject,
@@ -52,6 +54,8 @@ interface EditorState {
 
   applyMaterialPreset: (presetId: MaterialConfig['presetId']) => void;
   applyTemplateById: (templateId: string) => void;
+  /** Restores the style captured before the first template was applied. */
+  restoreStyle: () => void;
   resetProject: () => void;
 
   selectLayer: (id: string | null) => void;
@@ -80,6 +84,26 @@ function touch(config: ProjectConfig, patch: Partial<ProjectConfig>): ProjectCon
   return { ...config, ...patch };
 }
 
+/**
+ * Workflow guards.
+ *
+ * Every mutation that changes style or content reports to the workflow machine.
+ * A refusal (e.g. while an export is running) aborts the mutation so the
+ * exporter never renders a scene that changed under it.
+ */
+function markStyleEdit(): boolean {
+  const workflow = useWorkflowStore.getState();
+  const result = workflow.send({ type: 'STYLE_EDITED' });
+  if (!result.accepted) return false;
+  // Manual edit ⇒ the pre-template snapshot is no longer "the current edit".
+  workflow.setRestorePoint(null);
+  return true;
+}
+
+function markContentEdit(): boolean {
+  return useWorkflowStore.getState().send({ type: 'CONTENT_EDITED' }).accepted;
+}
+
 export const useEditorStore = create<EditorState>((set, get) => ({
   config: createDefaultProject(),
   selectedLayerId: 'title',
@@ -89,46 +113,60 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   images: {},
   activeImageAssetId: null,
 
-  setStage: (stage) => set({ config: { ...get().config, stage } }),
+  setStage: (stage) => {
+    if (!markContentEdit()) return;
+    set({ config: { ...get().config, stage } });
+  },
 
-  patchCamera: (patch) =>
+  patchCamera: (patch) => {
+    if (!markStyleEdit()) return;
     set({
       config: touch(get().config, {
         camera: { ...get().config.camera, ...patch },
         templateId: null,
       }),
-    }),
+    });
+  },
 
-  patchProduct: (patch) =>
-    set({ config: touch(get().config, { product: { ...get().config.product, ...patch } }) }),
+  patchProduct: (patch) => {
+    if (!markContentEdit()) return;
+    set({ config: touch(get().config, { product: { ...get().config.product, ...patch } }) });
+  },
 
-  patchMaterial: (patch) =>
+  patchMaterial: (patch) => {
+    if (!markStyleEdit()) return;
     set({
       config: touch(get().config, {
         material: { ...get().config.material, ...patch },
         templateId: null,
       }),
-    }),
+    });
+  },
 
-  patchLighting: (patch) =>
+  patchLighting: (patch) => {
+    if (!markStyleEdit()) return;
     set({
       config: touch(get().config, {
         lighting: { ...get().config.lighting, ...patch },
         templateId: null,
       }),
-    }),
+    });
+  },
 
-  patchAnimation: (patch) =>
+  patchAnimation: (patch) => {
+    if (!markStyleEdit()) return;
     set({
       config: touch(get().config, {
         animation: { ...get().config.animation, ...patch },
         templateId: null,
       }),
-    }),
+    });
+  },
 
   applyMaterialPreset: (presetId) => {
     const preset = MATERIAL_PRESETS[presetId];
     if (!preset) return;
+    if (!markStyleEdit()) return;
     set({
       config: touch(get().config, {
         material: {
@@ -145,10 +183,46 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   applyTemplateById: (templateId) => {
-    set({ config: applyTemplate(get().config, templateId) });
+    const template = TEMPLATES.find((item) => item.id === templateId);
+    if (!template) return;
+    const workflow = useWorkflowStore.getState();
+    // The machine decides first: applying a template during an export must not
+    // half-apply.
+    const result = workflow.send({ type: 'TEMPLATE_APPLIED', templateId });
+    if (!result.accepted) return;
+
+    const config = get().config;
+    // Remember the user's own style once, before the first template is applied
+    // (switching template A → B keeps the original snapshot).
+    if (!workflow.restorePoint && config.templateId === null) {
+      workflow.setRestorePoint(pickStyleSnapshot(config));
+    }
+    set({ config: { ...applyTemplate(config, templateId), templateId } });
   },
 
-  resetProject: () =>
+  restoreStyle: () => {
+    const workflow = useWorkflowStore.getState();
+    const snapshot = workflow.restorePoint;
+    if (!snapshot) {
+      workflow.setMessage('没有可恢复的内容：应用模板后尚未记录快照', 'warn');
+      return;
+    }
+    const result = workflow.send({ type: 'TEMPLATE_RESTORED' });
+    if (!result.accepted) return;
+    workflow.setRestorePoint(null);
+    set({
+      config: touch(get().config, {
+        material: { ...snapshot.material },
+        lighting: { ...snapshot.lighting, background: { ...snapshot.lighting.background } },
+        camera: { ...snapshot.camera },
+        animation: { ...snapshot.animation },
+        templateId: snapshot.templateId,
+      }),
+    });
+  },
+
+  resetProject: () => {
+    useWorkflowStore.getState().resetWorkflow();
     set({
       config: createDefaultProject(),
       selectedLayerId: 'title',
@@ -156,18 +230,22 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       assetError: null,
       images: {},
       activeImageAssetId: null,
-    }),
+    });
+  },
 
   selectLayer: (id) => set({ selectedLayerId: id }),
 
-  updateLayer: (id, patch) =>
+  updateLayer: (id, patch) => {
+    if (!markContentEdit()) return;
     set({
       config: touch(get().config, {
         layers: get().config.layers.map((layer) => (layer.id === id ? ({ ...layer, ...patch } as Layer) : layer)),
       }),
-    }),
+    });
+  },
 
   addLayer: (kind) => {
+    if (!markContentEdit()) return;
     const base = get().config.layers;
     const topZ = base.reduce((max, layer) => Math.max(max, layer.zIndex), 0) + 1;
     let layer: Layer;
@@ -204,13 +282,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
   },
 
-  removeLayer: (id) =>
+  removeLayer: (id) => {
+    if (!markContentEdit()) return;
     set({
       config: touch(get().config, { layers: get().config.layers.filter((layer) => layer.id !== id) }),
       selectedLayerId: get().selectedLayerId === id ? null : get().selectedLayerId,
-    }),
+    });
+  },
 
   duplicateLayer: (id) => {
+    if (!markContentEdit()) return;
     const source = get().config.layers.find((layer) => layer.id === id);
     if (!source) return;
     const copy: Layer = {
@@ -288,6 +369,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   clearImageAssets: () => set({ images: {}, activeImageAssetId: null }),
 
   addImageLayer: (meta) => {
+    if (!markContentEdit()) return '';
     const config = get().config;
     const topZ = config.layers.reduce((max, layer) => Math.max(max, layer.zIndex), 0) + 1;
     const layer: ImageLayer = {
@@ -313,14 +395,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return layer.id;
   },
 
-  setLayerImageAsset: (layerId, assetId) =>
+  setLayerImageAsset: (layerId, assetId) => {
+    if (!markContentEdit()) return;
     set({
       config: touch(get().config, {
         layers: get().config.layers.map((layer) =>
           layer.id === layerId && layer.type === 'image' ? { ...layer, assetId } : layer,
         ),
       }),
-    }),
+    });
+  },
 }));
 
 /** Selector helper for the currently selected layer. */

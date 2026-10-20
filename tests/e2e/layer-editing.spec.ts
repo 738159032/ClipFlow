@@ -259,10 +259,10 @@ test('positions survive stage presets and a viewport resize', async ({ page }) =
   for (const [label, size] of [
     ['方形', '1080 × 1080'],
     ['横屏', '1920 × 1080'],
-    ['预览', '1280 × 720'],
+    ['720p', '1280 × 720'],
     ['竖屏', '1080 × 1920'],
   ] as const) {
-    await page.getByRole('button', { name: label }).click();
+    await page.getByRole('button', { name: label, exact: true }).click();
     await expect(page.getByTestId('stage-size')).toHaveText(size);
     await page.waitForTimeout(250);
     const after = await rectPercent(page, price);
